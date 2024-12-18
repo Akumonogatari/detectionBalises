@@ -1,7 +1,7 @@
 clear;close all;clc;
 
 
-folder = "dataset/N/";
+folder = "dataset/S/";
 files = dir(folder + "*.jpg");
 
 
@@ -10,5 +10,4 @@ for i = 1:length(files)
 
     mask = beaconMask(img);
 
-    colorEstimation(mask, img)
 end

@@ -9,7 +9,8 @@ subplot(2,2,1); imshow(img); title('Original Image');
 
 ihsv = rgb2hsv(img);
 % isolate yellow / orange colors()
-yellow = (ihsv(:,:,1) > 0.05 & ihsv(:,:,1) < 0.2) & (ihsv(:,:,2) > 0.20 & ihsv(:,:,3) > 0.10);
+% thresholds 
+yellow = (ihsv(:,:,1) > 0.05 & ihsv(:,:,1) < 0.17) & (ihsv(:,:,2) > 0.20 & ihsv(:,:,3) > 0.10);
 
 % figure; imshow(yellow, []); title('Yellow Mask');
 
@@ -27,6 +28,11 @@ thresholded_opened = imopen(thresholded, strel('disk', 3));
 thresholded_opened = bwareaopen(thresholded_opened,  fix(m*n/1500) );
 thresholded_opened = imclearborder(thresholded_opened);
 
+if (sum(thresholded_opened(:)) == 0)
+    thresholded_opened = thresholded;
+    thresholded_opened = bwareaopen(thresholded_opened,  fix(m*n/2500) );
+end
+
 subplot(2,2,2);
 imshow(thresholded_opened, []);
 title('Segmented Image');
@@ -35,7 +41,8 @@ title('Segmented Image');
 [row, col] = find(thresholded_opened, 1, 'first');
 [row2, col2] = find(thresholded_opened, 1, 'last');
 
-grad = abs(imgradient(grayImg));
+% horizontal gradient
+grad = abs(imgradient(grayImg, 'sobel'));
 
 grad = grad > max(grad(:)) * 0.01;
 grad = imclose(grad, strel('disk', 4));
