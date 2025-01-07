@@ -46,6 +46,7 @@ grad = abs(imgradient(grayImg, 'sobel'));
 
 grad = grad > max(grad(:)) * 0.01;
 grad = imclose(grad, strel('disk', 4));
+grad = imopen(grad, strel('line', 3,0));
 
 grad(:, 1:col-30) = 0;
 grad(:, col2+30:end) = 0;
