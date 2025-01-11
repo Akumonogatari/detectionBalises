@@ -71,8 +71,38 @@ yellow_mask = (ihsv(:,:,1) > 0.05 & ihsv(:,:,1) < 0.17) & (ihsv(:,:,2) > 0.20 & 
 r = regionprops(yellow_mask, 'Area');
 areas = cat(1, r.Area);
 yellow = bwareaopen(yellow_mask, fix(max(areas)*0.4));
-yellow_dilated = imdilate(yellow,strel("rectangle",[150,5]));
 
+
+r = regionprops(yellow, 'BoundingBox', 'Area');
+if (length(r) > 1)
+    boundingBoxes = cat(1, r.BoundingBox);
+
+    % Sort by x coordinate
+    [~, idx] = sort(boundingBoxes(:, 1), 'ascend');
+    r = r(idx);
+
+    % Check if the bounding boxes are too far of each others (only look for the x axis)
+    % if so delete the smallest one
+    for i = 1:length(r)
+        for j = i+1:length(r)
+            if ( (r(i).BoundingBox(1) + r(i).BoundingBox(3)*3) < r(j).BoundingBox(1))
+                if (r(i).Area < r(j).Area)
+                    % delete the smallest one from yellow using the boundingbox
+                    yellow(fix(r(i).BoundingBox(2)):fix(r(i).BoundingBox(2)+r(i).BoundingBox(4)), ...
+                        fix(r(i).BoundingBox(1)):fix(r(i).BoundingBox(1)+r(i).BoundingBox(3))) = 0;
+                    
+                   
+                else
+                    yellow(fix(r(j).BoundingBox(2)):fix(r(j).BoundingBox(2)+r(j).BoundingBox(4)), ...
+                        fix(r(j).BoundingBox(1)):fix(r(j).BoundingBox(1)+r(j).BoundingBox(3))) = 0;
+                end
+            end
+        end
+    end
+end
+
+
+yellow_dilated = imdilate(yellow,strel("rectangle",[150,5]));
 
 mask = imreconstruct(yellow_dilated,mask);
 

@@ -3,7 +3,7 @@
 clear;close all;clc;
 
 
-direction = 'West';
+direction = 'South';
 folder = "dataset/"+ direction(1)  +"/";
 files = dir(folder + "*.jpg");
 
@@ -14,7 +14,7 @@ for i = 1:length(files)
     I = imread(strcat(folder,files(i).name));
     
     mask = beaconMask(I);
-    esti = triangleEstimation(mask,I);
+    esti = colorEstimation(mask,I);
     disp(esti);
     % esti = colorEstimation(mask,I)
     if esti == string(direction)
@@ -29,7 +29,7 @@ disp(compt/length(files)*100 + "% of the images are correctly classified as "+ d
 %% Test MonoImage
 
 clear;close all;clc;
-img = imread('dataset/S/h3YP60d.jpg');
+img = imread('dataset/N/Y79Jt8c.jpg');
 
 mask = beaconMask(img);
 

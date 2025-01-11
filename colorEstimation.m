@@ -37,22 +37,19 @@ yellow_mask = imclose(yellow_mask,strel('disk',2));
 % Delete every object with a smaller area the 15% of the biggest one
 r = regionprops(yellow_mask, 'Area');
 areas = cat(1, r.Area);
-yellow = bwareaopen(yellow_mask, fix(max(areas)*0.15));
+yellow = bwareaopen(yellow_mask, fix(max(areas)*0.25));
 
 
 % Si il reste plus de 2 objets jaunes augmenter le seuil de suppression
-
-if (length(yellow )>2)
-    yellow = bwareaopen(yellow_mask, fix(max(areas)*0.25));
+r = regionprops(yellow, 'BoundingBox');
+if (length(r ) > 2)
+    yellow = bwareaopen(yellow_mask, fix(max(areas)*0.35));
 end
+
+
 
 figure;
 subplot(1,2,1);imshow(studied_area,[]); title('Original Image');
-
-
-
-
-
 
 r = regionprops(yellow, 'BoundingBox');
 
@@ -104,25 +101,37 @@ rectangle('Position', boundingBoxMask, 'EdgeColor', 'b', 'LineWidth', 2);
 % draw the limis lines 
 
 % draw the horizontals limits lines
-line([0, width(image)], [boundingBoxMask(2) + (boundingBoxMask(4)*2/6), boundingBoxMask(2) + (boundingBoxMask(4)*2/6)], 'Color', 'b', 'LineWidth', 2);
+line([0, width(image)], [boundingBoxMask(2) + (boundingBoxMask(4)/3), boundingBoxMask(2) + (boundingBoxMask(4)/3)], 'Color', 'b', 'LineWidth', 2);
 
-line([0,width(image)], [boundingBoxMask(2) + (boundingBoxMask(4)*4/6) , boundingBoxMask(2) + (boundingBoxMask(4)*4/6)], 'Color', 'r', 'LineWidth', 2);
+line([0,width(image)], [boundingBoxMask(2) + (boundingBoxMask(4)*2/3) , boundingBoxMask(2) + (boundingBoxMask(4)*2/3)], 'Color', 'r', 'LineWidth', 2);
 
+
+tiers_haut = [boundingBoxMask(2), boundingBoxMask(2) + (boundingBoxMask(4)*35/100)];
+tiers_median = [boundingBoxMask(2) + (boundingBoxMask(4)*35/100) ...
+                , boundingBoxMask(2) + (boundingBoxMask(4)*65/100)];
+tiers_bas = [boundingBoxMask(2) + (boundingBoxMask(4)*65/100) ...
+                , boundingBoxMask(2) + (boundingBoxMask(4))];
 
 % Check if there is 1 or 2 yellow areas
 if (isscalar(r))
     % Check if the yellow area is on the top, bottom or middle, of the beacon
-    topBox = r(1).BoundingBox;
+    yellowBox = r(1).BoundingBox;
+
+    y_inc_top = yellowBox(2);
+    y_inc_bottom = yellowBox(2) + yellowBox(4);
+
         
-    if (topBox(2) + (topBox(4)/2) < boundingBoxMask(2) + (boundingBoxMask(4)*2/6))
-        direction = "South";
-    else;if(topBox(2)+ (topBox(4)/2) < boundingBoxMask(2) + (boundingBoxMask(4)*4/6))
-            direction = "East";
-            
-        else
-            direction = "North";
-        end
-    end
+    % Calcul de l'intersection avec chaque tiers
+    proportion_haut = max(0, min(y_inc_bottom, tiers_haut(2)) - max(y_inc_top, tiers_haut(1)));
+    proportion_median = max(0, min(y_inc_bottom, tiers_median(2)) - max(y_inc_top, tiers_median(1)));
+    proportion_bas = max(0, min(y_inc_bottom, tiers_bas(2)) - max(y_inc_top, tiers_bas(1)));
+
+    % Identifier le tiers principal
+    [~, tier_principal] = max([proportion_haut, proportion_median, proportion_bas]);
+
+    % Afficher les résultats
+    tiers = {'South', 'East', 'North'};
+    direction = tiers{tier_principal};
 else
     direction = "West";
     
