@@ -1,0 +1,183 @@
+\documentclass{article}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage[a4paper, margin=1in]{geometry} % Adjust the margin as needed
+
+\title{Rapport de Projet d'analyse d'image\\ Détection et classification de Balise Cardinale}
+\author{BACK Raphaël, BOUTET Paul}
+\date{Janvier 2025}
+
+\begin{document}
+
+\maketitle
+
+\begin{abstract}
+    Ce rapport présente les différentes étapes de notre projet d'analyse d'image. L'objectif de ce projet est de détecter et classifier les balises cardinales dans une image. Nous avons utilisé plusieurs méthodes pour segmenter les balises, les classifier par couleur et par forme. Nous avons également mis en place une double validation pour améliorer la précision de notre algorithme. Enfin, nous avons proposé une méthode pour déterminer la direction de navigation à partir des balises détectées. Nous présentons les résultats obtenus et discutons des améliorations possibles.
+\end{abstract}
+
+\section{Segmentation des balises}
+
+L'objectif de cette partie est de segmenter les balises cardinales dans une
+image, l'idée est d'obtenir un masque de l'image qui ne contient que les
+balises cardinales. Nous allons ici utiliser plusieurs reconstruction par
+dilatation sur notre image.
+
+\subsection{Étape 1: Masque de couleur jaune}
+
+Nous voulons ici obtenir le masque de couleur jaune qui nous servira de
+marqueur pour la suite de la segmentation.
+
+\subsubsection{Conversion en HSV et seuillage}
+Pour avoir des premiers marqueurs internes aux balises cardinales, nous avons
+décidé de segmenter les zones de couleur jaune. Pour cela, nous convertissons
+l'image en HSV et procédons à un seuillage. La composante H nous permet
+d'isoler les zones de couleur jaune. En appliquant un seuillage sur la
+composante S nous limitons la détections de bancs de sables qui ont une couleur
+proche de celle des balises mais une saturation plus faible.
+
+\subsubsection{Nettoyage}
+Nous effectuons ensuite évidement une néttoyage par ouvertures morphologiques
+pour éliminer les petites zones de bruits et les zones touchants les bords de
+l'image.
+
+\subsection{Étape 2: Seuillage du gradient sur la composante bleu}
+
+Nous voulons ici obtenir un masque de l'image contenant les balises cardinales
+pour pouvoir y appliquer une reconstruction par dilatation.
+
+\subsubsection{Calcul du gradient}
+Afin de détecter les contours des balises, nous avons décidé de calculer un
+gradient sur la composante bleue de l'image. L'intérêt de cette méthode est de
+mettre en évidence les contours des balises qui sont noire et jaune et donc une
+très faible composante bleue ce qui crée un fort contraste avec l'arrière plan
+généralement bleu.
+
+Nous appliquons un seuillage sur le gradient obtenu pour obtenir le masque
+voulu.
+
+\subsubsection{Troncature du gradient}
+Afin de suupprimer un maximum les grandes zones de plages en font et de limiter
+un maximum les grand objets en arrière plan de nos balises, nous avons décidé
+de limiter le calcul du gradient à une zone de l'image délimitée par le masque
+de couleur jaune obtenu précédemment. Cette zone est délimitée par les
+abscisses minimales et maximales du masque jaune avec une certaine marge pour
+ne pas être trop proche des bords de la balise.
+
+\subsection{Étape 3: Reconstruction par dilatation}
+
+Ici nous allons utiliser les marqueurs obtenus précédemment pour effectuer une
+reconstruction par dilatation sur le gradient de la composante bleue. Cette
+opération nous permet de segmenter les balises cardinales.
+
+Malheureusement, ici nous détectons tout objets contenant une zone jaune. Des
+petits objets tels que des bouées ou des bateaux peuvent être détectés. Nous
+allons donc devoir effectuer une étape de post-traitement pour ne garder que
+les balises cardinales.
+
+\subsection{Étape 4: Suppression des objets non pertinents}
+
+Nous allons maintenant réapplqiquer la méthode précédente (reconstruction par
+dilatation) pour ne garder que les balises cardinales.
+
+Nous calculons donc ici un nouveau masque qui servira de marqueur à la future
+recosntruction par dilatation.
+
+\subsubsection{Détection des zones jaunes}
+Nous allons ici réappliquer la méthode de seuillage sur la composante jaune de
+l'image pour obtenir les zones jaunes dans les balises. Nous appliquons donc
+notre calcul des zones jaunes sur l'image masquée par le dernier masque obtenu.
+
+\subsubsection{Suppression des objets trops petits}
+Nous allons ici supprimer les objets trop petits pour être des balises
+cardinales. Pour cela nous allons calculer l'aire de chaque objet présent et
+les filter en fonction de leur aire en proportion de l'aire du plus grand
+objet.
+
+\subsubsection{Suppression des objets lointains}
+Après plusieurs tests, nous avons remarqué que les balises cardinales sont
+effectivement trouvées mais qu'il arrive ici que certaines bouées ou objets
+assez grand soient détectés. Nous avons donc décidé de supprimer les objets
+trop éloignés en abscisse du plus grand objet détecté que nous considérons
+comme la partie jaune de la balise cardinale.
+
+\subsubsection{Reconstruction par dilatation}
+
+Nous appliquons donc maintenant une reconstruction par dilatation sur le
+premier masque reconstruit en utilisant le masque jaune juste nettoyé.
+
+\subsection{Étape 5: Amélioration de la détection des triangles}
+
+Les tests nous on montré que la détection des triangles n'était pas parfaite.
+En effet, les triangles sont souvent raté par la détection car ils ne forment
+pas une composante connexe avec les balises sur le gradient calculé.
+
+Pour pallier à ce problème, nous avons décidé de faire un dilatation vers le
+haut de la balise détectée et de refaire une reconstruction par dilatation sur
+le gradient de la composante bleue afin de détecter les triangles
+potentiellements oubliées précedement.
+
+Nous utilisons donc le masque final de l'étape 4 dilaté vers le haut comme
+marqueur pour la reconstruction par dilatation.
+
+Les resultats de cette méthode sont relativement satisfaisant et nous
+permettent de détecter plus de triangles que précédemment.
+
+\section{Classification par couleur}
+
+Nous avons maintant un masque de l'image qui ne contient que la balise
+classifier. L'objectif de cette partie est de classifier la balise en fonction
+de sa couleur. Pour cela nous allons analyser la position des zones jaunes de
+la balise.
+
+\subsection{Boite englobante de la balise}
+
+Nous allons ici calculer la boite englobante de la balise pour pouvoir
+déterminer la position des zones jaunes par rapport à la balise.
+
+En considérant que le masque ne comprend que la balise, nous pouvons calculer
+la boite englobante de la balise en utilisant la boite englobante du masque.
+
+La boite englobante d'intérêt est la boite englobante de la balise sans les
+triangles. Pour isoler cette zone de la balise, nous avons décidé de supprimer
+les 22 plus hauts pourcents de la boite englobante de la balise.
+
+\subsection{Détection des boites englobantes des zones jaunes}
+
+Afin de calculer la position des zones jaunes par rapport à la balise, nous
+avons besoins de leurs boites englobantes.
+
+Nous faisons donc une détection des zones jaunes par seuillage en HSV et fusionnons les boudings boxes des zones jaunes trop proches ou se chevauchant.
+
+Une étape de néttoyage est également effectuée pour supprimer les zones jaunes trop petites.
+qui pourrait correspondre à des bruits ou à des ombres sur le pied de la balise par exemple.
+
+\subsection{Classification}
+
+Nous allons maintenant classifier la balise en fonction de la position des zones jaunes par rapport à la balise.
+
+Un premier filtre est effectué dans le cas ou 2 zones jaunes sont détectés car seules
+les balises cardinales Ouest ont 2 zones jaunes.
+
+Nous calculons ensuite si la zone jaune restante est présente dans la partie haute, médiane ou basse de la boite englobante de la balise.
+Cela nous permet de déterminer si la balise est une balise cardinale Nord, Est ou Sud.
+
+
+\section{Classification par triangles}
+
+\section{Double Validation}
+
+\section{Recherche d'une direction de navigation}
+
+\section{Analyse des résultats}
+\subsection{Segmentation}
+\subsection{Classification par couleur}
+\subsection{Classification par triangles}
+\subsection{Double Validation}
+
+\begin{thebibliography}{9}
+    \bibitem{example} Author, \textit{Title of the Book}, Publisher, Year.
+\end{thebibliography}
+
+\end{document}

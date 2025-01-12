@@ -18,7 +18,7 @@ for i =1 : length(boundingBoxTriangles)
     rectangle('Position',boundingBoxTriangles(i).BoundingBox, 'EdgeColor', 'r', 'LineWidth', 2);
 end
 
-% fusion the bounding boxes
+% fusion des bounding boxes
 maxX = 0; maxY = 0; minX = 100000; minY = 100000;
 for i = 1:length(boundingBoxTriangles)
     maxX = max(maxX, boundingBoxTriangles(i).BoundingBox(1) + boundingBoxTriangles(i).BoundingBox(3));
@@ -36,6 +36,8 @@ triangles = imcrop(studied_area,boundingBoxTriangles);
 
 subplot(1,2,2); imshow(triangles);title("triangles");
 
+
+% Calculs des quarts de triangles
 q1 = imcrop(mask, [minX,minY,maxX - minX, fix(heigth*1/4)]);
 q2 = imcrop(mask, [minX,minY + fix(heigth*1/4),maxX - minX, fix(heigth*1/4)]);
 q3 = imcrop(mask, [minX,minY + fix(heigth*2/4),maxX - minX, fix(heigth*1/4)]);
@@ -53,6 +55,7 @@ sum2 = sum(q2(:));
 sum3 = sum(q3(:));
 sum4 = sum(q4(:));
 
+% classification
 
 if (sum1 > sum2)
     if (sum3 > sum4)

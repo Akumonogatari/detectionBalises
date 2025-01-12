@@ -13,7 +13,7 @@ studied_area =  bsxfun(@times, image, cast(mask, 'like', image));
 
 boundingBoxMask = regionprops(mask, 'BoundingBox');
 
-% fusion the bounding boxes
+% fusionner les boîtes englobantes
 maxX = 0; maxY = 0; minX = 100000; minY = 100000;
 for i = 1:length(boundingBoxMask)
     maxX = max(maxX, boundingBoxMask(i).BoundingBox(1) + boundingBoxMask(i).BoundingBox(3));
@@ -24,21 +24,18 @@ end
 
 boundingBoxMask = [minX, minY + 0.22*(maxY - minY), maxX - minX, (maxY - minY)*0.78];
 
-
-
-% hsv to detect yellow
+% hsv pour détecter le jaune
 
 ihsv = rgb2hsv(studied_area);
-% isolate yellow / orange colors()
+% isoler les couleurs jaunes / oranges
 yellow_mask = (ihsv(:,:,1) > 0.05 & ihsv(:,:,1) < 0.17) & (ihsv(:,:,2) > 0.30 & ihsv(:,:,3) > 0.25);
 yellow_mask = imclose(yellow_mask,strel('disk',2));
 
-
-% Delete every object with a smaller area the 15% of the biggest one
+% Supprimer tous les objets avec une surface plus petite que 15% du plus grand
 r = regionprops(yellow_mask, 'Area');
+
 areas = cat(1, r.Area);
 yellow = bwareaopen(yellow_mask, fix(max(areas)*0.25));
-
 
 % Si il reste plus de 2 objets jaunes augmenter le seuil de suppression
 r = regionprops(yellow, 'BoundingBox');
@@ -46,28 +43,25 @@ if (length(r ) > 2)
     yellow = bwareaopen(yellow_mask, fix(max(areas)*0.35));
 end
 
-
-
 figure;
 subplot(1,2,1);imshow(studied_area,[]); title('Original Image');
 
 r = regionprops(yellow, 'BoundingBox');
 
-% Extract BoundingBox values
+% Extraire les valeurs de BoundingBox
 boundingBoxes = cat(1, r.BoundingBox);
 
-% Sort by y coordinate
+% Trier par coordonnée y
 [~, idx] = sort(boundingBoxes(:, 2), 'ascend');
 r = r(idx);
 
-% Show the bounding boxes in green
+% Afficher les boîtes englobantes en vert
 for i = 1:length(r)
     rectangle('Position', r(i).BoundingBox, 'EdgeColor', 'g', 'LineWidth', 2);
 end
 
-
-% Check if the bounding boxes overlap or are too close of each others (only look for the y axis)
-% if so, fusion them
+% Vérifier si les boîtes englobantes se chevauchent ou sont trop proches les unes des autres (regarder uniquement l'axe y)
+% si c'est le cas, les fusionner
 
 for i = 1:length(r)
     for j = i+1:length(r)
@@ -86,7 +80,7 @@ end
 subplot(1,2,2);imshow(yellow,[]); title('Yellow Mask');
 r = r(~arrayfun(@(x) all(x.BoundingBox == 0), r));
 
-% show the boundings boxes
+% afficher les boîtes englobantes
 for i = 1:length(r)
     rectangle('Position', r(i).BoundingBox, 'EdgeColor', 'y', 'LineWidth', 2);
 end
@@ -98,13 +92,12 @@ end
 
 rectangle('Position', boundingBoxMask, 'EdgeColor', 'b', 'LineWidth', 2);
 
-% draw the limis lines 
+% dessiner les lignes de limites
 
-% draw the horizontals limits lines
+% dessiner les lignes horizontales de limites
 line([0, width(image)], [boundingBoxMask(2) + (boundingBoxMask(4)/3), boundingBoxMask(2) + (boundingBoxMask(4)/3)], 'Color', 'b', 'LineWidth', 2);
 
 line([0,width(image)], [boundingBoxMask(2) + (boundingBoxMask(4)*2/3) , boundingBoxMask(2) + (boundingBoxMask(4)*2/3)], 'Color', 'r', 'LineWidth', 2);
-
 
 tiers_haut = [boundingBoxMask(2), boundingBoxMask(2) + (boundingBoxMask(4)*35/100)];
 tiers_median = [boundingBoxMask(2) + (boundingBoxMask(4)*35/100) ...
@@ -112,15 +105,14 @@ tiers_median = [boundingBoxMask(2) + (boundingBoxMask(4)*35/100) ...
 tiers_bas = [boundingBoxMask(2) + (boundingBoxMask(4)*65/100) ...
                 , boundingBoxMask(2) + (boundingBoxMask(4))];
 
-% Check if there is 1 or 2 yellow areas
+% Vérifier s'il y a 1 ou 2 zones jaunes
 if (isscalar(r))
-    % Check if the yellow area is on the top, bottom or middle, of the beacon
+    % Vérifier si la zone jaune est en haut, en bas ou au milieu de la balise
     yellowBox = r(1).BoundingBox;
 
     y_inc_top = yellowBox(2);
     y_inc_bottom = yellowBox(2) + yellowBox(4);
 
-        
     % Calcul de l'intersection avec chaque tiers
     proportion_haut = max(0, min(y_inc_bottom, tiers_haut(2)) - max(y_inc_top, tiers_haut(1)));
     proportion_median = max(0, min(y_inc_bottom, tiers_median(2)) - max(y_inc_top, tiers_median(1)));
