@@ -3,7 +3,7 @@
 clear;close all;clc;
 
 
-direction = 'South';
+direction = 'West';
 folder = "dataset/"+ direction(1)  +"/";
 files = dir(folder + "*.jpg");
 
@@ -12,14 +12,15 @@ compt = 0;
 for i = 1:length(files)
     
     I = imread(strcat(folder,files(i).name));
+
+    % disp(files(i).name);
     
     mask = beaconMask(I);
-    esti = colorEstimation(mask,I);
-    disp(esti);
-    % esti = colorEstimation(mask,I)
-    if esti == string(direction)
-        compt = compt + 1;
-    end
+    % esti = triangleEstimation(mask,I);
+    % disp(esti);
+    % if esti == string(direction)
+    %     compt = compt + 1;
+    % end
 end
 
 disp(compt/length(files)*100 + "% of the images are correctly classified as "+ direction +" (" + compt + "/"+ length(files)+ ")");

@@ -3,6 +3,10 @@
 \usepackage{amsfonts}
 \usepackage{amssymb}
 \usepackage{graphicx}
+\usepackage{array}
+\usepackage{booktabs}
+\usepackage{xcolor,colortbl}
+
 \usepackage[a4paper, margin=1in]{geometry} % Adjust the margin as needed
 
 \title{Rapport de Projet d'analyse d'image\\ Détection et classification de Balise Cardinale}
@@ -17,6 +21,11 @@
     Ce rapport présente les différentes étapes de notre projet d'analyse d'image. L'objectif de ce projet est de détecter et classifier les balises cardinales dans une image. Nous avons utilisé plusieurs méthodes pour segmenter les balises, les classifier par couleur et par forme. Nous avons également mis en place une double validation pour améliorer la précision de notre algorithme. Enfin, nous avons proposé une méthode pour déterminer la direction de navigation à partir des balises détectées. Nous présentons les résultats obtenus et discutons des améliorations possibles.
 \end{abstract}
 
+\setcounter{tocdepth}{2}
+\tableofcontents
+
+\newpage
+
 \section{Segmentation des balises}
 
 L'objectif de cette partie est de segmenter les balises cardinales dans une
@@ -24,7 +33,7 @@ image, l'idée est d'obtenir un masque de l'image qui ne contient que les
 balises cardinales. Nous allons ici utiliser plusieurs reconstruction par
 dilatation sur notre image.
 
-\subsection{Étape 1: Masque de couleur jaune}
+\subsection{Masque de couleur jaune}
 
 Nous voulons ici obtenir le masque de couleur jaune qui nous servira de
 marqueur pour la suite de la segmentation.
@@ -38,11 +47,11 @@ composante S nous limitons la détections de bancs de sables qui ont une couleur
 proche de celle des balises mais une saturation plus faible.
 
 \subsubsection{Nettoyage}
-Nous effectuons ensuite évidement une néttoyage par ouvertures morphologiques
-pour éliminer les petites zones de bruits et les zones touchants les bords de
+Nous effectuons ensuite évidemment un nettoyage par ouvertures morphologiques
+pour éliminer les petites zones de bruits et les zones touchant les bords de
 l'image.
 
-\subsection{Étape 2: Seuillage du gradient sur la composante bleu}
+\subsection{Seuillage du gradient sur la composante bleu}
 
 Nous voulons ici obtenir un masque de l'image contenant les balises cardinales
 pour pouvoir y appliquer une reconstruction par dilatation.
@@ -58,14 +67,14 @@ Nous appliquons un seuillage sur le gradient obtenu pour obtenir le masque
 voulu.
 
 \subsubsection{Troncature du gradient}
-Afin de suupprimer un maximum les grandes zones de plages en font et de limiter
-un maximum les grand objets en arrière plan de nos balises, nous avons décidé
+Afin de supprimer un maximum les grandes zones de plages en fond et de limiter
+un maximum les grands objets en arrière plan de nos balises, nous avons décidé
 de limiter le calcul du gradient à une zone de l'image délimitée par le masque
 de couleur jaune obtenu précédemment. Cette zone est délimitée par les
 abscisses minimales et maximales du masque jaune avec une certaine marge pour
 ne pas être trop proche des bords de la balise.
 
-\subsection{Étape 3: Reconstruction par dilatation}
+\subsection{Reconstruction par dilatation}
 
 Ici nous allons utiliser les marqueurs obtenus précédemment pour effectuer une
 reconstruction par dilatation sur le gradient de la composante bleue. Cette
@@ -76,23 +85,23 @@ petits objets tels que des bouées ou des bateaux peuvent être détectés. Nous
 allons donc devoir effectuer une étape de post-traitement pour ne garder que
 les balises cardinales.
 
-\subsection{Étape 4: Suppression des objets non pertinents}
+\subsection{Suppression des objets non pertinents}
 
-Nous allons maintenant réapplqiquer la méthode précédente (reconstruction par
+Nous allons maintenant réappliquer la méthode précédente (reconstruction par
 dilatation) pour ne garder que les balises cardinales.
 
 Nous calculons donc ici un nouveau masque qui servira de marqueur à la future
-recosntruction par dilatation.
+reconstruction par dilatation.
 
 \subsubsection{Détection des zones jaunes}
 Nous allons ici réappliquer la méthode de seuillage sur la composante jaune de
 l'image pour obtenir les zones jaunes dans les balises. Nous appliquons donc
 notre calcul des zones jaunes sur l'image masquée par le dernier masque obtenu.
 
-\subsubsection{Suppression des objets trops petits}
+\subsubsection{Suppression des objets trop petits}
 Nous allons ici supprimer les objets trop petits pour être des balises
 cardinales. Pour cela nous allons calculer l'aire de chaque objet présent et
-les filter en fonction de leur aire en proportion de l'aire du plus grand
+les filtrer en fonction de leur aire en proportion de l'aire du plus grand
 objet.
 
 \subsubsection{Suppression des objets lointains}
@@ -107,16 +116,16 @@ comme la partie jaune de la balise cardinale.
 Nous appliquons donc maintenant une reconstruction par dilatation sur le
 premier masque reconstruit en utilisant le masque jaune juste nettoyé.
 
-\subsection{Étape 5: Amélioration de la détection des triangles}
+\subsection{Amélioration de la détection des triangles}
 
-Les tests nous on montré que la détection des triangles n'était pas parfaite.
-En effet, les triangles sont souvent raté par la détection car ils ne forment
+Les tests nous ont montré que la détection des triangles n'était pas parfaite.
+En effet, les triangles sont souvent ratés par la détection car ils ne forment
 pas une composante connexe avec les balises sur le gradient calculé.
 
 Pour pallier à ce problème, nous avons décidé de faire un dilatation vers le
 haut de la balise détectée et de refaire une reconstruction par dilatation sur
 le gradient de la composante bleue afin de détecter les triangles
-potentiellements oubliées précedement.
+potentiellement oubliés précédemment.
 
 Nous utilisons donc le masque final de l'étape 4 dilaté vers le haut comme
 marqueur pour la reconstruction par dilatation.
@@ -126,7 +135,7 @@ permettent de détecter plus de triangles que précédemment.
 
 \section{Classification par couleur}
 
-Nous avons maintant un masque de l'image qui ne contient que la balise
+Nous avons maintenant un masque de l'image qui ne contient que la balise
 classifier. L'objectif de cette partie est de classifier la balise en fonction
 de sa couleur. Pour cela nous allons analyser la position des zones jaunes de
 la balise.
@@ -146,38 +155,202 @@ les 22 plus hauts pourcents de la boite englobante de la balise.
 \subsection{Détection des boites englobantes des zones jaunes}
 
 Afin de calculer la position des zones jaunes par rapport à la balise, nous
-avons besoins de leurs boites englobantes.
+avons besoin de leurs boîtes englobantes.
 
-Nous faisons donc une détection des zones jaunes par seuillage en HSV et fusionnons les boudings boxes des zones jaunes trop proches ou se chevauchant.
+Nous faisons donc une détection des zones jaunes par seuillage en HSV et
+fusionnons les bounding boxes des zones jaunes trop proches ou se chevauchant.
 
-Une étape de néttoyage est également effectuée pour supprimer les zones jaunes trop petites.
-qui pourrait correspondre à des bruits ou à des ombres sur le pied de la balise par exemple.
+Une étape de nettoyage est également effectuée pour supprimer les zones jaunes
+trop petites. qui pourrait correspondre à des bruits ou à des ombres sur le
+pied de la balise par exemple.
 
 \subsection{Classification}
 
-Nous allons maintenant classifier la balise en fonction de la position des zones jaunes par rapport à la balise.
+Nous allons maintenant classifier la balise en fonction de la position des
+zones jaunes par rapport à la balise.
 
-Un premier filtre est effectué dans le cas ou 2 zones jaunes sont détectés car seules
-les balises cardinales Ouest ont 2 zones jaunes.
+Un premier filtre est effectué dans le cas ou 2 zones jaunes sont détectés car
+seules les balises cardinales Ouest ont 2 zones jaunes.
 
-Nous calculons ensuite si la zone jaune restante est présente dans la partie haute, médiane ou basse de la boite englobante de la balise.
-Cela nous permet de déterminer si la balise est une balise cardinale Nord, Est ou Sud.
-
+Nous calculons ensuite si la zone jaune restante est présente dans la partie
+haute, médiane ou basse de la boite englobante de la balise. Cela nous permet
+de déterminer si la balise est une balise cardinale Nord, Est ou Sud.
 
 \section{Classification par triangles}
 
 \section{Double Validation}
 
+Afin de d'améliorer la précision de notre algorithme, nous avons décidé de
+mettre en place une double validation. L'idée est de vérifier que la
+classification par couleur et par forme sont cohérentes. Pour cela, nous allons
+comparer les résultats obtenus par les deux méthodes et ne conserver que les
+balises qui sont classées de la même manière par les deux méthodes.
+
+\subsection{Paramètre de cohérence}
+Nous créons donc un paramètre de confiance nommé cohérence (consitency) qui est
+un booléen TRUE quand les 2 algorithmes sont cohérents et FALSE sinon.
+
+La direction de navigation conseillée, explicitée dans partie suivante, est
+calculée seulement dans les cas cohérents.
+
 \section{Recherche d'une direction de navigation}
 
-\section{Analyse des résultats}
-\subsection{Segmentation}
-\subsection{Classification par couleur}
-\subsection{Classification par triangles}
-\subsection{Double Validation}
+La recherche de la direction de navigation est simple et ne se fait que par
+simple calcul de la position des balises par rapport à la position du bateau.
 
-\begin{thebibliography}{9}
-    \bibitem{example} Author, \textit{Title of the Book}, Publisher, Year.
-\end{thebibliography}
+Nous affichons la direction de navigation conseillée en fonction de la position
+des balises cardinales détectées directement sur l'image demandée.
+
+\newpage
+\section{Analyse des résultats}
+
+Les résultats suivants sont les résultats de classification des balises
+cardinales sur les images de test. Ces résultats et statistiques sont calculés
+sur le jeu de données de test de l'énoncé. Ci-dessous, le tableau des
+résultats.
+
+\begin{table}[h!]
+    \centering
+    \resizebox{\textwidth}{!}{%
+        \begin{tabular}{|c|p{4cm}|c|c|c|}
+            \hline
+            \rowcolor{gray!60}
+            \textbf{Image}       & \textbf{Segmentation Result} & \textbf{Color Classification} & \textbf{Triangle Classification} & \textbf{Consistency} \\ \hline
+            \rowcolor{gray!40}
+            \textbf{South}       &                              & 50\%                          & 50\%                             & 30\%                 \\ \hline
+
+            \textbf{60dsP35.jpg} & Background kept              & West                          & North                            & FALSE                \\ \hline
+            \rowcolor{gray!10}
+            \textbf{7yVN7Wh.jpg} &                              & East                          & South                            & FALSE                \\ \hline
+            \rowcolor{gray!0}
+            \textbf{86LjH8X.jpg} & Water under kept             & South                         & South                            & TRUE                 \\ \hline
+            \rowcolor{gray!10}
+            \textbf{8K2kvSA.jpg} & Water under kept             & South                         & South                            & TRUE                 \\ \hline
+            \rowcolor{gray!0}
+            \textbf{A6hVLZ7.jpg} &                              & East                          & North                            & FALSE                \\ \hline
+            \rowcolor{gray!10}
+            \textbf{J3JGeTY.jpg} & Lack 1 triangle              & South                         & West                             & FALSE                \\ \hline
+            \rowcolor{gray!0}
+            \textbf{O1XtIg5.jpg} & Water under kept             & South                         & West                             & FALSE                \\ \hline
+            \rowcolor{gray!10}
+            \textbf{YU750z5.jpg} & A bit of land behind         & South                         & South                            & TRUE                 \\ \hline
+            \rowcolor{gray!0}
+            \textbf{h3YP60d.jpg} & Water around kept            & West                          & North                            & FALSE                \\ \hline
+            \rowcolor{gray!10}
+            \textbf{i4R1U6v.jpg} & Half, lack triangles         & East                          & South                            & FALSE                \\ \hline
+            \rowcolor{gray!40}
+            \textbf{East}        &                              & 90\%                          & 70\%                             & 60\%                 \\ \hline
+            \rowcolor{gray!0}
+            \textbf{3DTzEGh.jpg} & Water around kept            & East                          & South                            & FALSE                \\ \hline
+            \rowcolor{gray!10}
+            \textbf{7F08T3Y.jpg} &                              & East                          & East                             & TRUE                 \\ \hline
+            \rowcolor{gray!0}
+            \textbf{8b3J5Me.jpg} & Lack triangles               & East                          & North                            & FALSE                \\ \hline
+            \rowcolor{gray!10}
+            \textbf{G3amY5r.jpg} & Triangles blurred            & East                          & East                             & TRUE                 \\ \hline
+            \rowcolor{gray!0}
+            \textbf{MI8n706.jpg} & Lack 1 triangle              & East                          & West                             & FALSE                \\ \hline
+            \rowcolor{gray!10}
+            \textbf{QO80o8u.jpg} &                              & East                          & East                             & TRUE                 \\ \hline
+            \rowcolor{gray!0}
+            \textbf{SHmk487.jpg} &                              & East                          & East                             & TRUE                 \\ \hline
+            \rowcolor{gray!10}
+            \textbf{UJNcds9.jpg} &                              & East                          & East                             & TRUE                 \\ \hline
+            \rowcolor{gray!0}
+            \textbf{d5KA2X6.jpg} & A bit of land behind         & East                          & East                             & TRUE                 \\ \hline
+            \rowcolor{gray!10}
+            \textbf{tA2n98e.jpg} & Cut in half horizontally     & North                         & East                             & FALSE                \\ \hline
+            \rowcolor{gray!40}
+            \textbf{North}       &                              & 72,73\%                       & 81,82\%                          & 72,73\%              \\ \hline
+            \rowcolor{gray!0}
+            \textbf{3bFnQfx.jpg} &                              & North                         & North                            & TRUE                 \\ \hline
+            \rowcolor{gray!10}
+            \textbf{3zmY4P1.jpg} & Water under kept             & East                          & North                            & FALSE                \\ \hline
+            \rowcolor{gray!0}
+            \textbf{5I878xn.jpg} & Lack 1 triangle              & East                          & East                             & TRUE                 \\ \hline
+            \rowcolor{gray!10}
+            \textbf{5epK341.jpg} & Holes in triangles           & North                         & North                            & TRUE                 \\ \hline
+            \rowcolor{gray!0}
+            \textbf{863P5k3.jpg} & Land behind                  & North                         & North                            & TRUE                 \\ \hline
+            \rowcolor{gray!10}
+            \textbf{Pn1PEIM.jpg} &                              & North                         & North                            & TRUE                 \\ \hline
+            \rowcolor{gray!0}
+            \textbf{TgfIcDT.jpg} &                              & North                         & North                            & TRUE                 \\ \hline
+            \rowcolor{gray!10}
+            \textbf{Y79Jt8c.jpg} & Land behind                  & North                         & North                            & TRUE                 \\ \hline
+            \rowcolor{gray!0}
+            \textbf{bsO98Tk.jpg} & A bit of land behind         & East                          & North                            & FALSE                \\ \hline
+            \rowcolor{gray!10}
+            \textbf{fVrzdzC.jpg} & Triangles cut                & North                         & West                             & FALSE                \\ \hline
+            \rowcolor{gray!0}
+            \textbf{oeSph7h.jpg} & A bit of water under kept    & North                         & North                            & TRUE                 \\ \hline
+            \rowcolor{gray!40}
+            \textbf{West}        &                              & 90\%                          & 80\%                             & 70\%                 \\ \hline
+            \rowcolor{gray!0}
+            \textbf{01Tn6V3.jpg} &                              & West                          & West                             & TRUE                 \\ \hline
+            \rowcolor{gray!10}
+            \textbf{08hYdUe.jpg} &                              & West                          & West                             & TRUE                 \\ \hline
+            \rowcolor{gray!0}
+            \textbf{63JKJVG.jpg} & Water under kept             & West                          & West                             & TRUE                 \\ \hline
+            \rowcolor{gray!10}
+            \textbf{65MsTb3.jpg} &                              & West                          & West                             & TRUE                 \\ \hline
+            \rowcolor{gray!0}
+            \textbf{8KzVm58.jpg} & Lack triangles               & South                         & West                             & FALSE                \\ \hline
+            \rowcolor{gray!10}
+            \textbf{Ao1UT0B.jpg} &                              & West                          & West                             & TRUE                 \\ \hline
+            \rowcolor{gray!0}
+            \textbf{IY2fAd3.jpg} &                              & West                          & West                             & TRUE                 \\ \hline
+            \rowcolor{gray!10}
+            \textbf{QI7MH37.jpg} & Water under kept             & West                          & West                             & TRUE                 \\ \hline
+            \rowcolor{gray!0}
+            \textbf{XP96z9K.jpg} & Lack triangles               & West                          & East                             & FALSE                \\ \hline
+            \rowcolor{gray!10}
+            \textbf{mtjUaK0.jpg} & Lack triangles               & West                          & North                            & FALSE                \\ \hline
+            \rowcolor{gray!40}
+            \textbf{Total}       &                              & \textbf{75,61\%}              & \textbf{68,29\%}                 & \textbf{58,54\%}     \\ \hline
+        \end{tabular}%}
+    }
+    \caption{Résultats de classification des balises cardinales}\label{tab:segmentation_results}
+\end{table}
+
+\subsection{Segmentation}
+
+On remarque que la segmentation des balises n'est pas parfaite. En effet, il
+manque parfois des triangles ou des parties de balises. Cela peut être dû à la
+qualité de l'image, à la présence d'ombres ou à la présence d'autres objets
+dans l'image qui peuvent interférer avec la détection des balises.
+
+Les problèmes les plus courants sont du au fort gradient dans les vagues ou a
+des objets en fond qui sont confondus avec la balise dans le gradient de
+l'image.
+
+On pert également parfois des triangles malgré notre méthode d'agrandissement
+puis de reconstruction par dilatation.
+
+\subsection{Classification par couleur}
+
+La classification par couleur est relativement précise. Nous remarquons que
+dans les cas ou la segmentation est bonne ou que l'on detecte un objet en
+arrière plan, la classification par couleur est correcte. Cette méthode semble
+donc globalement efficace pour classer les balises cardinales.
+
+\subsection{Classification par triangles}
+
+La classification par triangles semble moins efficace que la classification par
+couleurs au vu des résultats généraux mais elle est très fortement dépendante
+de la segmentation des balises. En effet, si la segmentation est mauvaise, il
+est difficile de détecter les triangles.
+
+On remarque en effet que la plupart des erreurs de cette méthode sont dues à une
+mauvaise segmentation des balises plutôt qu'à une mauvaise classification des
+triangles.
+
+\section{Conclusion}
+
+En conclusion, notre algorithme est relativement efficace pour classifier les balises cardinales. La classification par couleur est plus précise que la classification par triangle car plus robuste aux mauvaises segmentations. La double validation permet d'améliorer la précision de notre algorithme. Cependant, la segmentation des balises reste perfectible. Il serait intéressant d'explorer d'autres méthodes de segmentation pour améliorer les résultats. Il serait également intéressant de tester notre algorithme sur un plus grand jeu de données pour évaluer sa robustesse.
+
+Il pourrait également être intéressant d'explorer la piste d'une detection des blocs noirs pour améliorer les résultats de la segmentation par couleur dans les cas ou les balises ont une zone jaune grande en comparaison de la zone noire.
+
+La méthode par détection de triangles pourrait également être améliorée en utilisant des méthodes de détection des contours plus précises et en appliquant peut être une seconde segmentation lors de cette étape.
 
 \end{document}
