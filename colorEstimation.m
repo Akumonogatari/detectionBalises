@@ -9,6 +9,7 @@ function direction = colorEstimation(mask, image)
 % Returns:
 %  direction: the direction of the beacon
 
+%% Boite englobante de la balise
 studied_area =  bsxfun(@times, image, cast(mask, 'like', image));
 
 boundingBoxMask = regionprops(mask, 'BoundingBox');
@@ -24,6 +25,8 @@ end
 
 boundingBoxMask = [minX, minY + 0.22*(maxY - minY), maxX - minX, (maxY - minY)*0.78];
 
+
+%% Détection des boites englobantes des zones jaunes
 % hsv pour détecter le jaune
 
 ihsv = rgb2hsv(studied_area);
@@ -89,6 +92,8 @@ subplot(1,2,1);
 for i = 1:length(r)
     rectangle('Position', r(i).BoundingBox, 'EdgeColor', 'y', 'LineWidth', 2);
 end
+
+%% Classification
 
 rectangle('Position', boundingBoxMask, 'EdgeColor', 'b', 'LineWidth', 2);
 

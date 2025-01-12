@@ -6,6 +6,8 @@ function mask = beaconMask(img)
 figure;
 subplot(2,2,1); imshow(img); title('Original Image');
 
+%% Masque de couleur jaune
+
 ihsv = rgb2hsv(img);
 % isoler les couleurs jaunes / oranges
 % seuils 
@@ -35,6 +37,8 @@ subplot(2,2,2);
 imshow(yellow, []);
 title('First yellow mask');
 
+
+%% Seuillage du gradient sur la composante bleu
 % Obtenir l'axe y de la première valeur non nulle du masque jaune
 [~, col] = find(thresholded_opened, 1, 'first');
 [~, col2] = find(thresholded_opened, 1, 'last');
@@ -49,9 +53,12 @@ grad = imopen(grad, strel('line', 3,0));
 grad(:, 1:col-30) = 0;
 grad(:, col2+30:end) = 0;
 
+%% Reconstruction par dilatation
 % Reconstruction par dilatation de l'image segmentée
 mask = imreconstruct(thresholded_opened,grad | thresholded_opened);
 
+
+%% Suppression des objets non pertinents
 % Redétection des objets jaunes pour supprimer des potentiels minis objets externes (bouées, etc)
 studied_area =  bsxfun(@times, img, cast(mask, 'like', img));
 
@@ -93,6 +100,8 @@ end
 yellow_dilated = imdilate(yellow,strel("rectangle",[150,5]));
 
 mask = imreconstruct(yellow_dilated,mask);
+
+%% Amélioration de la détection des triangles
 
 es_ligne = zeros(150,1);
 es_ligne(1:75) = 1;

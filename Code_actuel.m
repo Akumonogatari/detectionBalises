@@ -16,11 +16,11 @@ for i = 1:length(files)
     % disp(files(i).name);
     
     mask = beaconMask(I);
-    % esti = triangleEstimation(mask,I);
-    % disp(esti);
-    % if esti == string(direction)
-    %     compt = compt + 1;
-    % end
+    esti = triangleEstimation(mask,I);
+    disp(esti);
+    if esti == string(direction)
+        compt = compt + 1;
+    end
 end
 
 disp(compt/length(files)*100 + "% of the images are correctly classified as "+ direction +" (" + compt + "/"+ length(files)+ ")");

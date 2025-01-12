@@ -9,6 +9,8 @@ function result = triangleEstimation (mask,image)
 % Returns:
 %  direction: the direction of the beacon
 
+%% Boite englobante de la balise
+
 studied_area =  bsxfun(@times, image, cast(mask, 'like', image));
 figure;subplot(1,2,1);imshow(studied_area);
 
@@ -36,6 +38,8 @@ triangles = imcrop(studied_area,boundingBoxTriangles);
 
 subplot(1,2,2); imshow(triangles);title("triangles");
 
+
+%% Classification
 
 % Calculs des quarts de triangles
 q1 = imcrop(mask, [minX,minY,maxX - minX, fix(heigth*1/4)]);
