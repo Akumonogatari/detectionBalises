@@ -14,6 +14,7 @@ function result = triangleEstimation (mask,image)
 studied_area =  bsxfun(@times, image, cast(mask, 'like', image));
 figure;subplot(1,2,1);imshow(studied_area);
 
+
 boundingBoxTriangles = regionprops(mask, 'BoundingBox');
 
 for i =1 : length(boundingBoxTriangles)
@@ -37,6 +38,10 @@ rectangle('Position',boundingBoxTriangles, 'EdgeColor', 'g', 'LineWidth', 2);
 triangles = imcrop(studied_area,boundingBoxTriangles);
 
 subplot(1,2,2); imshow(triangles);title("triangles");
+
+%% Nettoyage de l'image
+
+mask = imopen(mask, strel('disk', 2));
 
 
 %% Classification

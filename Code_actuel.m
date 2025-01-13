@@ -3,7 +3,7 @@
 clear;close all;clc;
 
 
-direction = 'West';
+direction = 'East';
 folder = "dataset/"+ direction(1)  +"/";
 files = dir(folder + "*.jpg");
 
