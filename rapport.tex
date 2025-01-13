@@ -32,6 +32,8 @@ L'objectif est de segmenter les balises cardinales dans une image pour obtenir
 un masque ne contenant que les balises. Nous utilisons plusieurs
 reconstructions par dilatation.
 
+Voir Figure \ref{tab:mask-result} pour le résultat de la segmentation.
+
 \subsection{Masque de couleur jaune}
 
 Nous obtenons le masque de couleur jaune qui servira de marqueur pour la suite
@@ -127,6 +129,8 @@ Nous avons maintenant un masque de l'image ne contenant que la balise
 classifier. L'objectif est de classifier la balise en fonction de sa couleur en
 analysant la position des zones jaunes.
 
+Voir Figure \ref{tab:color-estimation} pour le résultat de la classification par couleur.
+
 \subsection{Boîte englobante de la balise}
 
 Nous calculons la boîte englobante de la balise pour déterminer la position des
@@ -168,6 +172,8 @@ Nous repartons du masque binaire de l’image, ne contenant que la balise
 classifier. Ce masque est une image en noir et blanc. L’objectif est de
 classifier la balise en fonction de l’orientation des triangles en analysant
 leur position.
+
+Voir les Figures \ref{tab:triangles-bb} et \ref{tab:triangles} pour les résultats et étapes de la classification par triangles.
 
 \subsection{Boîte englobante des triangles}
 
@@ -222,8 +228,62 @@ des balises cardinales détectées directement sur l'image demandée.
 
 Les résultats suivants sont les résultats de classification des balises
 cardinales sur les images de test. Ces résultats et statistiques sont calculés
-sur le jeu de données de test de l'énoncé. Ci-dessous, le tableau des
-résultats.
+sur le jeu de données de test de l'énoncé. Voir la Table \ref{tab:segmentation_results} pour les résultats détaillés.
+
+\subsection{Segmentation}
+
+On remarque que la segmentation des balises n'est pas parfaite. Il manque
+parfois des triangles ou des parties de balises. Cela peut être dû à la qualité
+de l'image, à la présence d'ombres ou à d'autres objets dans l'image qui
+interfèrent avec la détection des balises.
+
+Les problèmes les plus courants sont dus au fort gradient dans les vagues ou à
+des objets en fond qui sont confondus avec la balise dans le gradient de
+l'image.
+
+On perd également parfois des triangles malgré notre méthode d'agrandissement
+puis de reconstruction par dilatation.
+
+\subsection{Classification par couleur}
+
+La classification par couleur est relativement précise. Nous remarquons que
+dans les cas ou la segmentation est bonne ou que l'on detecte un objet en
+arrière plan, la classification par couleur est correcte. Cette méthode semble
+donc globalement efficace pour classer les balises cardinales.
+
+\subsection{Classification par triangles}
+
+La classification par triangles semble moins efficace que la classification par
+couleurs au vu des résultats généraux mais elle est très fortement dépendante
+de la segmentation des balises. En effet, si la segmentation est mauvaise, il
+est difficile de détecter les triangles.
+
+On remarque en effet que la plupart des erreurs de cette méthode sont dues à
+une mauvaise segmentation des balises plutôt qu'à une mauvaise classification
+des triangles.
+
+\section{Conclusion}
+
+En conclusion, notre algorithme est relativement efficace pour classifier les
+balises cardinales. La classification par couleur est plus précise que la
+classification par triangle car plus robuste aux mauvaises segmentations. La
+double validation permet d'améliorer la précision de notre algorithme.
+Cependant, la segmentation des balises reste perfectible. Il serait intéressant
+d'explorer d'autres méthodes de segmentation pour améliorer les résultats. Il
+serait également intéressant de tester notre algorithme sur un plus grand jeu
+de données pour évaluer sa robustesse.
+
+Il pourrait également être intéressant d'explorer la piste d'une detection des
+blocs noirs pour améliorer les résultats de la segmentation par couleur dans
+les cas ou les balises ont une zone jaune grande en comparaison de la zone
+noire.
+
+La méthode par détection de triangles pourrait également être améliorée en
+utilisant des méthodes de détection des contours plus précises et en appliquant
+peut être une seconde segmentation lors de cette étape.
+
+\newpage
+\section{Annexes}
 
 \begin{table}[h!]
     \centering
@@ -328,60 +388,7 @@ résultats.
     }
     \caption{Résultats de classification des balises cardinales}\label{tab:segmentation_results}
 \end{table}
-
-\subsection{Segmentation}
-
-On remarque que la segmentation des balises n'est pas parfaite. Il manque
-parfois des triangles ou des parties de balises. Cela peut être dû à la qualité
-de l'image, à la présence d'ombres ou à d'autres objets dans l'image qui
-interfèrent avec la détection des balises.
-
-Les problèmes les plus courants sont dus au fort gradient dans les vagues ou à
-des objets en fond qui sont confondus avec la balise dans le gradient de
-l'image.
-
-On perd également parfois des triangles malgré notre méthode d'agrandissement
-puis de reconstruction par dilatation.
-
-\subsection{Classification par couleur}
-
-La classification par couleur est relativement précise. Nous remarquons que
-dans les cas ou la segmentation est bonne ou que l'on detecte un objet en
-arrière plan, la classification par couleur est correcte. Cette méthode semble
-donc globalement efficace pour classer les balises cardinales.
-
-\subsection{Classification par triangles}
-
-La classification par triangles semble moins efficace que la classification par
-couleurs au vu des résultats généraux mais elle est très fortement dépendante
-de la segmentation des balises. En effet, si la segmentation est mauvaise, il
-est difficile de détecter les triangles.
-
-On remarque en effet que la plupart des erreurs de cette méthode sont dues à
-une mauvaise segmentation des balises plutôt qu'à une mauvaise classification
-des triangles.
-
-\section{Conclusion}
-
-En conclusion, notre algorithme est relativement efficace pour classifier les
-balises cardinales. La classification par couleur est plus précise que la
-classification par triangle car plus robuste aux mauvaises segmentations. La
-double validation permet d'améliorer la précision de notre algorithme.
-Cependant, la segmentation des balises reste perfectible. Il serait intéressant
-d'explorer d'autres méthodes de segmentation pour améliorer les résultats. Il
-serait également intéressant de tester notre algorithme sur un plus grand jeu
-de données pour évaluer sa robustesse.
-
-Il pourrait également être intéressant d'explorer la piste d'une detection des
-blocs noirs pour améliorer les résultats de la segmentation par couleur dans
-les cas ou les balises ont une zone jaune grande en comparaison de la zone
-noire.
-
-La méthode par détection de triangles pourrait également être améliorée en
-utilisant des méthodes de détection des contours plus précises et en appliquant
-peut être une seconde segmentation lors de cette étape.
-
-\section{Annexes}
+\newpage
 
 Les exemples ci-dessous sont calculés sur l'image "5epK341.jpg"
 \begin{figure}[h!]
@@ -390,11 +397,13 @@ Les exemples ci-dessous sont calculés sur l'image "5epK341.jpg"
         \centering
         \includegraphics[width=\textwidth]{masquage.eps}
         \caption{Masquage des balises dans l'image.}
+        \label{tab:mask-result}
     \end{minipage}\hfill
     \begin{minipage}{0.45\textwidth}
         \centering
         \includegraphics[width=\textwidth]{colorEsti.eps}
         \caption{Estimation de la couleur des balises.}
+        \label{tab:color-estimation}
     \end{minipage}
 
 \end{figure}
@@ -403,11 +412,13 @@ Les exemples ci-dessous sont calculés sur l'image "5epK341.jpg"
         \centering
         \includegraphics[width=\textwidth]{trianglesBB.eps}
         \caption{Bounding Box des triangles détectés.}
+        \label{tab:triangles-bb}
     \end{minipage}
     \begin{minipage}{0.45\textwidth}
         \centering
         \includegraphics[width=\textwidth]{triangles.eps}
         \caption{Triangles détectés.}
+        \label{tab:triangles}
     \end{minipage}\hfill
 
 \end{figure}
