@@ -18,7 +18,7 @@
 \maketitle
 
 \begin{abstract}
-    Ce rapport présente les différentes étapes de notre projet d'analyse d'image. L'objectif de ce projet est de détecter et classifier les balises cardinales dans une image. Nous avons utilisé plusieurs méthodes pour segmenter les balises, les classifier par couleur et par forme. Nous avons également mis en place une double validation pour améliorer la précision de notre algorithme. Enfin, nous avons proposé une méthode pour déterminer la direction de navigation à partir des balises détectées. Nous présentons les résultats obtenus et discutons des améliorations possibles.
+    Ce rapport présente notre projet d'analyse d'image visant à détecter et classifier les balises cardinales. Nous avons utilisé plusieurs méthodes pour segmenter les balises, les classifier par couleur et par forme, et mis en place une double validation pour améliorer la précision. Enfin, nous proposons une méthode pour déterminer la direction de navigation à partir des balises détectées. Nous présentons les résultats obtenus et discutons des améliorations possibles.
 \end{abstract}
 
 \setcounter{tocdepth}{2}
@@ -28,210 +28,192 @@
 
 \section{Segmentation des balises}
 
-L'objectif de cette partie est de segmenter les balises cardinales dans une
-image, l'idée est d'obtenir un masque de l'image qui ne contient que les
-balises cardinales. Nous allons ici utiliser plusieurs reconstruction par
-dilatation sur notre image.
+L'objectif est de segmenter les balises cardinales dans une image pour obtenir
+un masque ne contenant que les balises. Nous utilisons plusieurs
+reconstructions par dilatation.
 
 \subsection{Masque de couleur jaune}
 
-Nous voulons ici obtenir le masque de couleur jaune qui nous servira de
-marqueur pour la suite de la segmentation.
+Nous obtenons le masque de couleur jaune qui servira de marqueur pour la suite
+de la segmentation.
 
 \subsubsection{Conversion en HSV et seuillage}
-Pour avoir des premiers marqueurs internes aux balises cardinales, nous avons
-décidé de segmenter les zones de couleur jaune. Pour cela, nous convertissons
-l'image en HSV et procédons à un seuillage. La composante H nous permet
-d'isoler les zones de couleur jaune. En appliquant un seuillage sur la
-composante S nous limitons la détections de bancs de sables qui ont une couleur
-proche de celle des balises mais une saturation plus faible.
+Pour obtenir des marqueurs internes aux balises cardinales, nous segmentons les
+zones de couleur jaune en convertissant l'image en HSV et en procédant à un
+seuillage. La composante H isole les zones jaunes et un seuillage sur la
+composante S limite la détection de bancs de sable.
 
 \subsubsection{Nettoyage}
-Nous effectuons ensuite évidemment un nettoyage par ouvertures morphologiques
-pour éliminer les petites zones de bruit et les zones touchant les bords de
-l'image.
+Nous effectuons un nettoyage par ouvertures morphologiques pour éliminer les
+petites zones de bruit et les zones touchant les bords de l'image.
 
-\subsection{Seuillage du gradient sur la composante bleu}
+\subsection{Seuillage du gradient sur la composante bleue}
 
-Nous voulons ici obtenir un masque de l'image contenant les balises cardinales
-pour pouvoir y appliquer une reconstruction par dilatation.
+Nous obtenons un masque de l'image contenant les balises cardinales pour y
+appliquer une reconstruction par dilatation.
 
 \subsubsection{Calcul du gradient}
-Afin de détecter les contours des balises, nous avons décidé de calculer un
-gradient sur la composante bleue de l'image. L'intérêt de cette méthode est de
-mettre en évidence les contours des balises qui sont noire et jaune et donc une
-très faible composante bleue ce qui crée un fort contraste avec l'arrière plan
-généralement bleu.
+Pour détecter les contours des balises, nous calculons un gradient sur la
+composante bleue de l'image. Cette méthode met en évidence les contours des
+balises noires et jaunes, créant un fort contraste avec l'arrière-plan bleu.
 
 Nous appliquons un seuillage sur le gradient obtenu pour obtenir le masque
 voulu.
 
 \subsubsection{Troncature du gradient}
-Afin de supprimer un maximum les grandes zones de plages en fond et de limiter
-un maximum les grands objets en arrière plan de nos balises, nous avons décidé
-de limiter le calcul du gradient à une zone de l'image délimitée par le masque
-de couleur jaune obtenu précédemment. Cette zone est délimitée par les
-abscisses minimales et maximales du masque jaune avec une certaine marge pour
-ne pas être trop proche des bords de la balise.
+Pour supprimer les grandes zones de plages en fond et limiter les grands objets
+en arrière-plan, nous limitons le calcul du gradient à une zone de l'image
+délimitée par le masque jaune obtenu précédemment.
 
 \subsection{Reconstruction par dilatation}
 
-Ici nous allons utiliser les marqueurs obtenus précédemment pour effectuer une
-reconstruction par dilatation sur le gradient de la composante bleue. Cette
-opération nous permet de segmenter les balises cardinales.
+Nous utilisons les marqueurs obtenus pour effectuer une reconstruction par
+dilatation sur le gradient de la composante bleue, segmentant ainsi les balises
+cardinales.
 
-Malheureusement, ici nous détectons tout objet contenant une zone jaune. Des
-petits objets tels que des bouées ou des bateaux peuvent être détectés. Nous
-allons donc devoir effectuer une étape de post-traitement pour ne garder que
-les balises cardinales.
+Malheureusement, nous détectons tout objet contenant une zone jaune. Des petits
+objets tels que des bouées ou des bateaux peuvent être détectés. Nous devons
+donc effectuer une étape de post-traitement pour ne garder que les balises
+cardinales.
 
 \subsection{Suppression des objets non pertinents}
 
-Nous allons maintenant réappliquer la méthode précédente (reconstruction par
-dilatation) pour ne garder que les balises cardinales.
+Nous réappliquons la méthode précédente (reconstruction par dilatation) pour ne
+garder que les balises cardinales.
 
-Nous calculons donc ici un nouveau masque qui servira de marqueur à la future
+Nous calculons un nouveau masque qui servira de marqueur à la future
 reconstruction par dilatation.
 
 \subsubsection{Détection des zones jaunes}
-Nous allons ici réappliquer la méthode de seuillage sur la composante jaune de
-l'image pour obtenir les zones jaunes dans les balises. Nous appliquons donc
-notre calcul des zones jaunes sur l'image masquée par le dernier masque obtenu.
+Nous réappliquons la méthode de seuillage sur la composante jaune de l'image
+pour obtenir les zones jaunes dans les balises. Nous appliquons notre calcul
+des zones jaunes sur l'image masquée par le dernier masque obtenu.
 
 \subsubsection{Suppression des objets trop petits}
-Nous allons ici supprimer les objets trop petits pour être des balises
-cardinales. Pour cela nous allons calculer l'aire de chaque objet présent et
-les filtrer en fonction de leur aire en proportion de l'aire du plus grand
-objet.
+Nous supprimons les objets trop petits pour être des balises cardinales en
+calculant l'aire de chaque objet présent et en les filtrant en fonction de leur
+aire en proportion de l'aire du plus grand objet.
 
 \subsubsection{Suppression des objets lointains}
-Après plusieurs tests, nous avons remarqué que les balises cardinales sont
-effectivement trouvées mais qu'il arrive ici que certaines bouées ou objets
-assez grand soient détectés. Nous avons donc décidé de supprimer les objets
-trop éloignés en abscisse du plus grand objet détecté que nous considérons
-comme la partie jaune de la balise cardinale.
+Après plusieurs tests, nous avons remarqué que certaines bouées ou objets assez
+grands sont détectés. Nous décidons de supprimer les objets trop éloignés en
+abscisse du plus grand objet détecté, considéré comme la partie jaune de la
+balise cardinale.
 
 \subsubsection{Reconstruction par dilatation}
 
-Nous appliquons donc maintenant une reconstruction par dilatation sur le
-premier masque reconstruit en utilisant le masque jaune juste nettoyé.
+Nous appliquons une reconstruction par dilatation sur le premier masque
+reconstruit en utilisant le masque jaune nettoyé.
 
 \subsection{Amélioration de la détection des triangles}
 
-Les tests nous ont montré que la détection des triangles n'était pas parfaite.
-En effet, les triangles sont souvent ratés par la détection car ils ne forment
-pas une composante connexe avec les balises sur le gradient calculé.
+Les tests montrent que la détection des triangles n'est pas parfaite. Les
+triangles sont souvent ratés car ils ne forment pas une composante connexe avec
+les balises sur le gradient calculé.
 
-Pour pallier à ce problème, nous avons décidé de faire un dilatation vers le
-haut de la balise détectée et de refaire une reconstruction par dilatation sur
-le gradient de la composante bleue afin de détecter les triangles
-potentiellement oubliés précédemment.
+Pour pallier ce problème, nous faisons une dilatation vers le haut de la balise
+détectée et refaisons une reconstruction par dilatation sur le gradient de la
+composante bleue pour détecter les triangles potentiellement oubliés.
 
-Nous utilisons donc le masque final de l'étape 4 dilaté vers le haut comme
-marqueur pour la reconstruction par dilatation.
+Nous utilisons le masque final de l'étape 4 dilaté vers le haut comme marqueur
+pour la reconstruction par dilatation.
 
-Les resultats de cette méthode sont relativement satisfaisant et nous
-permettent de détecter plus de triangles que précédemment.
+Les résultats de cette méthode sont satisfaisants et permettent de détecter
+plus de triangles.
 
 \section{Classification par couleur}
 
-Nous avons maintenant un masque de l'image qui ne contient que la balise
-classifier. L'objectif de cette partie est de classifier la balise en fonction
-de sa couleur. Pour cela nous allons analyser la position des zones jaunes de
-la balise.
+Nous avons maintenant un masque de l'image ne contenant que la balise
+classifier. L'objectif est de classifier la balise en fonction de sa couleur en
+analysant la position des zones jaunes.
 
 \subsection{Boîte englobante de la balise}
 
-Nous allons ici calculer la boîte englobante de la balise pour pouvoir
-déterminer la position des zones jaunes par rapport à la balise.
+Nous calculons la boîte englobante de la balise pour déterminer la position des
+zones jaunes par rapport à la balise.
 
-En considérant que le masque ne comprend que la balise, nous pouvons calculer
-la boîte englobante de la balise en utilisant la boîte englobante du masque.
+En considérant que le masque ne comprend que la balise, nous calculons la boîte
+englobante de la balise en utilisant la boîte englobante du masque.
 
-La boîte englobante d'intérêt est la boîte englobante de la balise sans les
-triangles. Pour isoler cette zone de la balise, nous avons décidé de supprimer
-les 22 plus hauts pourcents de la boîte englobante de la balise.
+La boîte englobante d'intérêt est celle de la balise sans les triangles. Pour
+isoler cette zone, nous supprimons les 22 plus hauts pourcents de la boîte
+englobante de la balise.
 
 \subsection{Détection des boîtes englobantes des zones jaunes}
 
-Afin de calculer la position des zones jaunes par rapport à la balise, nous
-avons besoin de leurs boîtes englobantes.
+Pour calculer la position des zones jaunes par rapport à la balise, nous avons
+besoin de leurs boîtes englobantes.
 
-Nous faisons donc une détection des zones jaunes par seuillage en HSV et
-fusionnons les bounding boxes des zones jaunes trop proches ou se chevauchant.
+Nous détectons les zones jaunes par seuillage en HSV et fusionnons les bounding
+boxes des zones jaunes trop proches ou se chevauchant.
 
-Une étape de nettoyage est également effectuée pour supprimer les zones jaunes
-trop petites. qui pourrait correspondre à des bruits ou à des ombres sur le
-pied de la balise par exemple.
+Une étape de nettoyage est effectuée pour supprimer les zones jaunes trop
+petites, correspondant à des bruits ou des ombres sur le pied de la balise.
 
 \subsection{Classification}
 
-Nous allons maintenant classifier la balise en fonction de la position des
-zones jaunes par rapport à la balise.
+Nous classifions la balise en fonction de la position des zones jaunes par
+rapport à la balise.
 
-Un premier filtre est effectué dans le cas ou 2 zones jaunes sont détectés car
-seules les balises cardinales Ouest ont 2 zones jaunes.
+Un premier filtre est effectué si 2 zones jaunes sont détectées, car seules les
+balises cardinales Ouest ont 2 zones jaunes.
 
 Nous calculons ensuite si la zone jaune restante est présente dans la partie
-haute, médiane ou basse de la boîte englobante de la balise. Cela nous permet
-de déterminer si la balise est une balise cardinale Nord, Est ou Sud.
+haute, médiane ou basse de la boîte englobante de la balise, déterminant ainsi
+si la balise est Nord, Est ou Sud.
 
 \section{Classification par triangles}
 
-Dans cette partie, nous repartons du masque binaire de l’image, qui ne contient
-que la balise classifier. Ce masque est une image en noir et blanc. L’objectif
-de cette partie est de classifier la balise en fonction de l’orientation des
-triangles. Pour cela nous allons analyser la position des triangles de la
-balise.
+Nous repartons du masque binaire de l’image, ne contenant que la balise
+classifier. Ce masque est une image en noir et blanc. L’objectif est de
+classifier la balise en fonction de l’orientation des triangles en analysant
+leur position.
 
 \subsection{Boîte englobante des triangles}
 
-En partant de la Bounding Box ne contenant en théorie que la balise, on prend
-la partie supérieure contenant les triangles. En effet, ils représentent
-environ 22\% de sa hauteur, ce qui facilite l’extraction de cette partie de
-l’image. On obtient alors uniquement les 2 triangles de la balise étudiée,
-l’inverse de la partie précédente qui se concentrait sur le reste de la balise
-sans les triangles.
+En partant de la Bounding Box ne contenant que la balise, nous prenons la
+partie supérieure contenant les triangles. Ils représentent environ 22\% de sa
+hauteur, facilitant l’extraction de cette partie de l’image. Nous obtenons
+alors uniquement les 2 triangles de la balise étudiée.
 
 \subsection{Nettoyage des triangles}
 
 Pour simplifier l’étape suivante et garantir des triangles bien définis, un
-léger nettoyage est effectué. Cela consiste en une opération morphologique
-d’ouverture avec un disque comme élément structurant. Ce traitement permet
-d’éliminer les éventuels bruits autour des triangles, ainsi que la barre qui
-les supporte.
+léger nettoyage est effectué par une opération morphologique d’ouverture avec
+un disque comme élément structurant. Ce traitement élimine les éventuels bruits
+autour des triangles et la barre qui les supporte.
 
 \subsection{Classification}
 
-Enfin, l’image contenant les quatre triangles est divisée en quatre sous-images
-de taille égale, correspondant chacune à un demi-triangle. Pour identifier la
+L’image contenant les quatre triangles est divisée en quatre sous-images de
+taille égale, correspondant chacune à un demi-triangle. Pour identifier la
 balise, nous comptons le nombre de pixels blancs dans chaque demi-triangle.
 Selon la distribution des pixels, nous déterminons le type de balise.
 
-Exemple : Si la première image a plus de pixels que la deuxième alors le
+Exemple : Si la première image a plus de pixels que la deuxième, alors le
 premier triangle correspond à une balise Sud ou Ouest. De même, si la troisième
-image en a plus que la quatrième alors c’est une balise Sud. Ce qui nous donne
+image en a plus que la quatrième, alors c’est une balise Sud. Ce qui nous donne
 un résultat pour la classification par triangles.
 
 \section{Double Validation}
 
-Afin de d'améliorer la précision de notre algorithme, nous avons décidé de
-mettre en place une double validation. L'idée est de vérifier que la
-classification par couleur et par forme sont cohérentes. Pour cela, nous allons
-comparer les résultats obtenus par les deux méthodes et ne conserver que les
-balises qui sont classées de la même manière par les deux méthodes.
+Pour améliorer la précision de notre algorithme, nous mettons en place une
+double validation. L'idée est de vérifier que la classification par couleur et
+par forme sont cohérentes. Nous comparons les résultats obtenus par les deux
+méthodes et ne conservons que les balises classées de la même manière par les
+deux méthodes.
 
 \subsection{Paramètre de cohérence}
-Nous créons donc un paramètre de confiance nommé cohérence (consistency) qui
-est un booléen TRUE quand les 2 algorithmes sont cohérents et FALSE sinon.
+Nous créons un paramètre de confiance nommé cohérence (consistency) qui est un
+booléen TRUE quand les 2 algorithmes sont cohérents et FALSE sinon.
 
 La direction de navigation conseillée, explicitée dans la partie suivante, est
 calculée seulement dans les cas cohérents.
 
 \section{Recherche d'une direction de navigation}
 
-La recherche de la direction de navigation est simple et ne se fait que par
-simple calcul de la position des balises par rapport à la position du bateau.
+La recherche de la direction de navigation se fait par simple calcul de la
+position des balises par rapport à la position du bateau.
 
 Nous affichons la direction de navigation conseillée en fonction de la position
 des balises cardinales détectées directement sur l'image demandée.
@@ -250,7 +232,7 @@ résultats.
             \hline
             \rowcolor{gray!60}
             \textbf{Image}       & \textbf{Segmentation Result} & \textbf{Color Classification} & \textbf{Triangle Classification} & \textbf{Consistency} \\ \hline
-            
+
             \textbf{60dsP35.jpg} & Background kept              & West                          & North                            & FALSE                \\ \hline
             \rowcolor{gray!10}
             \textbf{7yVN7Wh.jpg} &                              & East                          & South                            & FALSE                \\ \hline
@@ -263,7 +245,7 @@ résultats.
             \rowcolor{gray!10}
             \textbf{J3JGeTY.jpg} & Lack 1 triangle              & South                         & West                             & FALSE                \\ \hline
             \rowcolor{gray!0}
-            \textbf{O1XtIg5.jpg} & Water under kept             & South                         & South                             & TRUE                \\ \hline
+            \textbf{O1XtIg5.jpg} & Water under kept             & South                         & South                            & TRUE                 \\ \hline
             \rowcolor{gray!10}
             \textbf{YU750z5.jpg} & A bit of land behind         & South                         & South                            & TRUE                 \\ \hline
             \rowcolor{gray!0}
@@ -349,10 +331,10 @@ résultats.
 
 \subsection{Segmentation}
 
-On remarque que la segmentation des balises n'est pas parfaite. En effet, il
-manque parfois des triangles ou des parties de balises. Cela peut être dû à la
-qualité de l'image, à la présence d'ombres ou à la présence d'autres objets
-dans l'image qui peuvent interférer avec la détection des balises.
+On remarque que la segmentation des balises n'est pas parfaite. Il manque
+parfois des triangles ou des parties de balises. Cela peut être dû à la qualité
+de l'image, à la présence d'ombres ou à d'autres objets dans l'image qui
+interfèrent avec la détection des balises.
 
 Les problèmes les plus courants sont dus au fort gradient dans les vagues ou à
 des objets en fond qui sont confondus avec la balise dans le gradient de
@@ -398,5 +380,36 @@ noire.
 La méthode par détection de triangles pourrait également être améliorée en
 utilisant des méthodes de détection des contours plus précises et en appliquant
 peut être une seconde segmentation lors de cette étape.
+
+\section{Annexes}
+
+Les exemples ci-dessous sont calculés sur l'image "5epK341.jpg"
+\begin{figure}[h!]
+    \centering
+    \begin{minipage}{0.45\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{masquage.eps}
+        \caption{Masquage des balises dans l'image.}
+    \end{minipage}\hfill
+    \begin{minipage}{0.45\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{colorEsti.eps}
+        \caption{Estimation de la couleur des balises.}
+    \end{minipage}
+
+\end{figure}
+\begin{figure}[h!]
+    \centering\begin{minipage}{0.45\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{trianglesBB.eps}
+        \caption{Bounding Box des triangles détectés.}
+    \end{minipage}
+    \begin{minipage}{0.45\textwidth}
+        \centering
+        \includegraphics[width=\textwidth]{triangles.eps}
+        \caption{Triangles détectés.}
+    \end{minipage}\hfill
+
+\end{figure}
 
 \end{document}

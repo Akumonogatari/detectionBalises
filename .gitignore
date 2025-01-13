@@ -30,6 +30,7 @@
 *.eps
 *.synctex.gz
 *.xdv
+*eps-converted-to.pdf
 
 # LaTeX editor files
 *~ 
